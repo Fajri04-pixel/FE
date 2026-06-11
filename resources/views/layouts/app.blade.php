@@ -436,7 +436,7 @@
                 <div>
                     <h4 class="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider">Kontak</h4>
                     <ul class="space-y-2.5 text-gray-500 text-sm">
-                        <li class="flex items-center gap-2"><i class="fab fa-whatsapp text-green-500"></i> +62 812-3456-7890</li>
+                        <li class="flex items-center gap-2"><i class="fab fa-whatsapp text-green-500"></i> +62 83869933917</li>
                         <li class="flex items-center gap-2"><i class="fas fa-envelope text-purple-500"></i> cs@hpmarket.com</li>
                         <li class="flex items-center gap-2"><i class="fab fa-instagram text-pink-500"></i> @hpmarket.id</li>
                     </ul>
@@ -522,6 +522,8 @@
                         Swal.fire({ title: 'Ditambahkan!', text: 'Produk berhasil masuk ke keranjang.', icon: 'success',
                             timer: 1800, showConfirmButton: false, timerProgressBar: true });
                         updateCartCount();
+                        // Jika dipanggil dari buyNow(), caller bisa override dengan redirect sendiri
+                        return true;
                     } else {
                         Swal.fire({ title: 'Gagal', text: data.message || 'Gagal menambahkan produk', icon: 'error', confirmButtonColor: '#1F4E79' });
                     }
@@ -563,7 +565,7 @@
                     });
                     const data = await res.json();
                     if (data.success) {
-                        Swal.fire({ title: 'Pesanan Berhasil! ðŸŽ‰', html: `<p>${data.message}</p>`,
+                        Swal.fire({ title: 'Pesanan Berhasil!', html: `<p>${data.message}</p>`,
                             icon: 'success', confirmButtonText: 'Lihat Pesanan', confirmButtonColor: '#1F4E79' })
                             .then(() => window.location.href = '{{ route('transactions.index') }}');
                         updateCartCount();

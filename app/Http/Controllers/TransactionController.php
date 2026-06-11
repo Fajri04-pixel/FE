@@ -68,4 +68,37 @@ class TransactionController extends Controller
             return response()->json(['success' => false, 'message' => 'Koneksi ke server gagal'], 500);
         }
     }
+
+    public function uploadProof(Request $request, $id)
+    {
+        if (!session('user')) {
+            return response()->json(['success' => false, 'message' => 'Silakan login'], 401);
+        }
+
+        $request->validate([
+            'bukti' => 'required|image|max:5120',
+        ]);
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . session('token')
+            ])->timeout(30)->attach(
+                'bukti',
+                file_get_contents($request->file('bukti')->getRealPath()),
+                $request->file('bukti')->getClientOriginalName()
+            )->post($this->apiUrl . '/transactions/' . $id . '/payment-proof');
+
+            $data = $response->json();
+
+            if ($response->successful() && ($data['success'] ?? false)) {
+                return response()->json(['success' => true, 'message' => $data['message'] ?? 'Bukti berhasil dikirim!']);
+            }
+
+            return response()->json(['success' => false, 'message' => $data['message'] ?? 'Gagal upload bukti'], $response->status());
+
+        } catch (\Exception $e) {
+            Log::error('TransactionController@uploadProof: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Koneksi ke server gagal'], 500);
+        }
+    }
 }

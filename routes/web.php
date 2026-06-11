@@ -33,6 +33,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/transactions',    [TransactionController::class, 'index'])->name('transactions.index');
     Route::post('/checkout',       [TransactionController::class, 'checkout'])->name('checkout');
+    Route::post('/transactions/{id}/payment-proof', [TransactionController::class, 'uploadProof'])->name('transactions.proof');
 
     Route::get('/profile',         [AuthController::class, 'showProfile'])->name('profile');
     Route::put('/profile',         [AuthController::class, 'updateProfile'])->name('profile.update');

@@ -144,34 +144,87 @@
                     @endif
                 </div>
 
-                {{-- Action: Bayar sekarang --}}
+                {{-- Pembayaran: Upload Bukti Transfer --}}
                 @if($status === 'pending')
                 <div class="px-5 pb-5">
                     <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
                         <p class="text-sm font-bold text-amber-800 mb-3 flex items-center gap-2">
                             <i class="fas fa-triangle-exclamation"></i> Selesaikan Pembayaran
                         </p>
-                        <div class="grid grid-cols-2 gap-3 text-xs text-amber-700 mb-3">
-                            <div class="bg-white rounded-lg p-3">
-                                <p class="font-bold text-gray-700">Bank BCA</p>
-                                <p class="font-mono text-lg font-bold mt-0.5">1234567890</p>
-                                <p class="text-gray-400">a.n HP Market</p>
+
+                        {{-- Info rekening --}}
+                        <div class="grid grid-cols-2 gap-3 text-xs mb-3">
+                            <div class="bg-white rounded-xl p-3 border border-amber-100">
+                                <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Bank BCA</p>
+                                <p class="font-mono text-base font-extrabold text-gray-800">6257232452</p>
+                                <p class="text-gray-400 text-[10px]">a.n HP Market</p>
                             </div>
-                            <div class="bg-white rounded-lg p-3">
-                                <p class="font-bold text-gray-700">Bank BRI</p>
-                                <p class="font-mono text-lg font-bold mt-0.5">0987654321</p>
-                                <p class="text-gray-400">a.n HP Market</p>
+                            <div class="bg-white rounded-xl p-3 border border-amber-100">
+                                <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Bank BRI</p>
+                                <p class="font-mono text-base font-extrabold text-gray-800">863528362</p>
+                                <p class="text-gray-400 text-[10px]">a.n HP Market</p>
                             </div>
                         </div>
-                        <p class="text-xs text-amber-600 mb-3">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Transfer sebesar <strong>Rp {{ number_format($transaction['total_amount'] ?? 0, 0, ',', '.') }}</strong>
-                            lalu konfirmasi via WhatsApp.
+
+                        <p class="text-xs text-amber-700 mb-3 flex items-center gap-1.5">
+                            <i class="fas fa-circle-info"></i>
+                            Transfer sebesar
+                            <strong>Rp {{ number_format($transaction['total_amount'] ?? 0, 0, ',', '.') }}</strong>,
+                            lalu upload bukti di bawah.
                         </p>
-                        <button onclick="confirmPay('{{ $transaction['invoice_number'] ?? '' }}', '{{ number_format($transaction['total_amount'] ?? 0, 0, ',', '.') }}')"
-                            class="w-full bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2">
-                            <i class="fab fa-whatsapp"></i> Konfirmasi Pembayaran via WA
+
+                        @php $hasProof = !empty($transaction['payment_proof']); @endphp
+
+                        {{-- Jika sudah upload bukti --}}
+                        @if($hasProof)
+                        <div class="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-3 mb-3">
+                            <i class="fas fa-circle-check text-green-500 text-lg"></i>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-green-700">Bukti pembayaran sudah dikirim</p>
+                                <p class="text-[10px] text-green-600">Menunggu verifikasi admin</p>
+                            </div>
+                            <a href="{{ 'http://localhost:5000/uploads/' . $transaction['payment_proof'] }}"
+                               target="_blank"
+                               class="text-xs text-green-700 underline hover:text-green-900 flex-shrink-0">
+                                Lihat bukti
+                            </a>
+                        </div>
+                        {{-- Tombol ganti bukti --}}
+                        <button onclick="toggleUploadForm('{{ $transaction['id'] }}')"
+                            class="text-xs text-amber-600 hover:text-amber-800 underline mb-2 block">
+                            Ganti bukti pembayaran
                         </button>
+                        @endif
+
+                        {{-- Form upload (tersembunyi jika sudah ada bukti) --}}
+                        <div id="uploadForm-{{ $transaction['id'] }}" class="{{ $hasProof ? 'hidden' : '' }}">
+                            <div id="dropZone-{{ $transaction['id'] }}"
+                                onclick="document.getElementById('proofFile-{{ $transaction['id'] }}').click()"
+                                class="border-2 border-dashed border-amber-300 rounded-xl bg-white p-4 text-center cursor-pointer hover:border-amber-500 hover:bg-amber-50 transition mb-3"
+                                ondragover="event.preventDefault();this.classList.add('border-amber-500')"
+                                ondragleave="this.classList.remove('border-amber-500')"
+                                ondrop="handleProofDrop(event, '{{ $transaction['id'] }}')">
+                                <div id="dropPlaceholder-{{ $transaction['id'] }}">
+                                    <i class="fas fa-cloud-arrow-up text-amber-400 text-2xl mb-2 block"></i>
+                                    <p class="text-xs font-semibold text-gray-600">Klik atau seret foto bukti transfer</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">JPG, PNG, WEBP — maks 5 MB</p>
+                                </div>
+                                <div id="proofPreview-{{ $transaction['id'] }}" class="hidden">
+                                    <img id="proofImg-{{ $transaction['id'] }}" src="" alt="Preview"
+                                         class="max-h-32 mx-auto rounded-lg object-contain">
+                                    <p id="proofName-{{ $transaction['id'] }}" class="text-[10px] text-gray-500 mt-1"></p>
+                                </div>
+                                <input type="file" id="proofFile-{{ $transaction['id'] }}"
+                                       accept="image/*" class="hidden"
+                                       onchange="previewProof(this, '{{ $transaction['id'] }}')">
+                            </div>
+
+                            <button onclick="submitProof('{{ $transaction['id'] }}')"
+                                id="submitProofBtn-{{ $transaction['id'] }}"
+                                class="w-full bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2">
+                                <i class="fas fa-paper-plane"></i> Kirim Bukti Pembayaran
+                            </button>
+                        </div>
                     </div>
                 </div>
                 @endif
@@ -216,27 +269,91 @@
 
 @push('scripts')
 <script>
-    function confirmPay(invoice, amount) {
-        const msg = encodeURIComponent(
-            `Halo Admin HP Market,\n\nSaya ingin konfirmasi pembayaran:\n` +
-            `Invoice : ${invoice}\n` +
-            `Total   : Rp ${amount}\n\n` +
-            `Mohon segera diproses. Terima kasih.`
-        );
-        Swal.fire({
-            title: 'Konfirmasi Pembayaran',
-            html: `<p class="text-gray-600 text-sm mb-3">Klik tombol di bawah untuk menghubungi admin via WhatsApp.</p>
-                   <p class="text-purple-700 font-bold">Invoice: ${invoice}</p>
-                   <p class="text-purple-700 font-bold">Total: Rp ${amount}</p>`,
-            icon: 'info',
-            showCancelButton:   true,
-            confirmButtonText:  '<i class="fab fa-whatsapp mr-1"></i> Buka WhatsApp',
-            cancelButtonText:   'Tutup',
-            confirmButtonColor: '#25D366',
-            cancelButtonColor:  '#9CA3AF',
-        }).then(r => {
-            if (r.isConfirmed) window.open(`https://wa.me/6281234567890?text=${msg}`, '_blank');
-        });
+    const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+
+    // Toggle form upload (untuk ganti bukti)
+    function toggleUploadForm(id) {
+        const form = document.getElementById('uploadForm-' + id);
+        form.classList.toggle('hidden');
+    }
+
+    // Preview foto sebelum upload
+    function previewProof(input, id) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            Swal.fire({ title: 'File Terlalu Besar', text: 'Maksimal 5 MB', icon: 'warning', confirmButtonColor: '#7C3AED' });
+            input.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('proofImg-'  + id).src = e.target.result;
+            document.getElementById('proofName-' + id).textContent = file.name;
+            document.getElementById('dropPlaceholder-' + id).classList.add('hidden');
+            document.getElementById('proofPreview-'    + id).classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Handle drag & drop
+    function handleProofDrop(e, id) {
+        e.preventDefault();
+        document.getElementById('dropZone-' + id).classList.remove('border-amber-500');
+        const file = e.dataTransfer.files[0];
+        if (!file || !file.type.startsWith('image/')) {
+            Swal.fire({ title: 'File Tidak Valid', text: 'Hanya file gambar', icon: 'warning', confirmButtonColor: '#7C3AED' });
+            return;
+        }
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        const input = document.getElementById('proofFile-' + id);
+        input.files = dt.files;
+        previewProof(input, id);
+    }
+
+    // Submit bukti ke server
+    async function submitProof(id) {
+        const input = document.getElementById('proofFile-' + id);
+        const btn   = document.getElementById('submitProofBtn-' + id);
+
+        if (!input.files.length) {
+            Swal.fire({ title: 'Pilih File Dulu', text: 'Upload foto bukti transfer terlebih dahulu', icon: 'warning', confirmButtonColor: '#7C3AED' });
+            return;
+        }
+
+        const fd = new FormData();
+        fd.append('bukti', input.files[0]);
+        fd.append('_token', CSRF);
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Mengirim...';
+
+        try {
+            const res  = await fetch(`/transactions/${id}/payment-proof`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+                body: fd,
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                Swal.fire({
+                    title: 'Bukti Terkirim!',
+                    text:  data.message || 'Admin akan segera memverifikasi pembayaran Anda.',
+                    icon:  'success',
+                    confirmButtonColor: '#7C3AED',
+                }).then(() => location.reload());
+            } else {
+                Swal.fire({ title: 'Gagal', text: data.message || 'Terjadi kesalahan', icon: 'error', confirmButtonColor: '#7C3AED' });
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Kirim Bukti Pembayaran';
+            }
+        } catch (e) {
+            Swal.fire({ title: 'Error', text: 'Koneksi gagal', icon: 'error', confirmButtonColor: '#7C3AED' });
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Kirim Bukti Pembayaran';
+        }
     }
 </script>
 @endpush

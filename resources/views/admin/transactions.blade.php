@@ -52,6 +52,7 @@
                         <th class="px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Pelanggan</th>
                         <th class="px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
                         <th class="px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Bukti</th>
                         <th class="px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tanggal</th>
                         <th class="px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
@@ -91,6 +92,18 @@
                         </td>
                         <td class="px-5 py-4">
                             <span class="badge {{ $badgeClass }}">{{ $statusLabel }}</span>
+                        </td>
+                        {{-- Kolom Bukti Pembayaran --}}
+                        <td class="px-5 py-4">
+                            @if(!empty($transaction['payment_proof']))
+                                <a href="http://localhost:5000/uploads/{{ $transaction['payment_proof'] }}"
+                                   target="_blank"
+                                   class="flex items-center gap-1.5 text-xs font-semibold text-green-600 hover:text-green-800">
+                                    <i class="fas fa-image"></i> Lihat
+                                </a>
+                            @else
+                                <span class="text-xs text-gray-400 italic">Belum ada</span>
+                            @endif
                         </td>
                         <td class="px-5 py-4">
                             <p class="text-sm text-gray-600">

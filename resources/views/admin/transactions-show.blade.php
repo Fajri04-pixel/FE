@@ -202,6 +202,49 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Bukti Pembayaran --}}
+            <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="fas fa-image text-purple-400"></i> Bukti Pembayaran
+                </h2>
+                @if(!empty($transaction['payment_proof']))
+                    <div class="space-y-3">
+                        <div class="rounded-2xl overflow-hidden border border-gray-100">
+                            <img src="http://localhost:5000/uploads/{{ $transaction['payment_proof'] }}"
+                                 alt="Bukti Pembayaran"
+                                 class="w-full object-contain max-h-72 bg-gray-50"
+                                 onerror="this.parentElement.innerHTML='<p class=\'p-4 text-sm text-gray-400 text-center\'>Gambar tidak dapat ditampilkan</p>'">
+                        </div>
+                        <a href="http://localhost:5000/uploads/{{ $transaction['payment_proof'] }}"
+                           target="_blank"
+                           class="flex items-center justify-center gap-2 text-sm font-semibold text-purple-600 hover:text-purple-800 border border-purple-200 rounded-xl py-2 hover:bg-purple-50 transition">
+                            <i class="fas fa-arrow-up-right-from-square text-xs"></i> Buka di Tab Baru
+                        </a>
+
+                        {{-- Tombol konfirmasi pembayaran --}}
+                        @if(($transaction['status'] ?? '') === 'pending')
+                        <form action="{{ route('admin.transactions.status', $transaction['id']) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="status" value="paid">
+                            <button type="submit"
+                                class="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2">
+                                <i class="fas fa-circle-check"></i> Konfirmasi — Tandai Sudah Dibayar
+                            </button>
+                        </form>
+                        @endif
+                    </div>
+                @else
+                    <div class="flex flex-col items-center justify-center py-8 text-center">
+                        <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mb-3">
+                            <i class="fas fa-image text-gray-300 text-2xl"></i>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-500">Belum Ada Bukti</p>
+                        <p class="text-xs text-gray-400 mt-1">User belum mengupload bukti transfer</p>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 </div>
